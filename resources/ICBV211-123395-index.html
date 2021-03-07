@@ -1,0 +1,571 @@
+<HTML>
+<HEAD>
+<TITLE>BGU - Computational Vision Course - Student Project Page</TITLE>
+</HEAD>
+
+<body MARGINWIDTH="0" 
+	MARGINHEIGHT="0" 
+	TOPMARGIN="0" 
+	LEFTMARGIN="0"
+	BGCOLOR="#FcFcFc" 
+	TEXT="#000000"
+	link="#003366" 
+	vlink="#666666" 
+	link="#CC0000">
+
+<!-- ?php include '../../menu_start.php'; ? -->
+
+<!--=======================================================================================================-->
+<!--=                         Start of page content                                                       =-->
+<!--=======================================================================================================-->
+
+<h2 align="center"> <em> Backgammon </em> </h2>
+<p align="center"> Final project by  </p>
+<p align="center"> <b> Or,Oz </b> </p>
+<p align="center"> <A href="mailto:" class="course"> hayatb@post.bgu.ac.il  </A> </p>
+
+<hr>
+
+<h3 align="left"> Introduction </h3>
+<p align="justify">
+	A program for playing the board game Backgammon vs. a computer opponent on a physical Backgammon board <br>
+<br>
+<p style="width:60%;">
+Backgammon is one of the oldest strategy games known, dating back to 5,000 years ago.<br>
+It involves  both strategy and luck, stemming from rolling two dice as part of the game.<br>
+Generally, it is a two-player game where each player has 15 checkers at a certain color (typically, black and white or black and red, but other colors exist).<br>
+The board is divided into 24 triangle-shaped cells in two alternating colors, and the checkers are moving around them based on the results of a dice roll (one roll per turn).<br>
+The objective of each player is to move all her/his 15 checkers off the board, and the first player to achieve this wins the game. 
+</p>
+	<br><br>
+	The goal of this project is to develop a fully functional software program that allows a human player to play backgammon versus an AI-powered computer opponent on a physical board game, while delivering very good user experience. The setup should be simple, ideally supported on a typical room/office environment with a standard laptop and USB webcam for image acquisition. 
+	It is important to note that this project mostly focuses on the acquisition and analysis of the physical backgammon board from a standard web camera, integrating it flawlessly into an existing Backgammon AI framework and while keeping performance and user experience as good as possible.  
+	<br><br>
+
+	Given the immense variety of colors, types and sizes of backgammon boards (see figure 1)
+	, we decided to keep the project scope reasonable by focusing on a specific,
+	standard Backgammon board and checkers that are common in Israel 
+	(figure 2). Having said that, it should be possible to adapt the software 
+	rather easily to different Backgammon boards, mostly by parameter tuning of the corresponding HSV filters. 
+
+	<br>
+	<div>
+		<img src=ICBV211-123395-Figure_1.png" alt="multiple avilable game boards">
+		<p><strong>Figure 1:</strong> multiple avilable game boards </p>
+	</div>
+		
+	<br>
+	<div>
+		<img src="ICBV211-123395-Figure_2.png" alt="the board and pieces we used in this project"/>
+		<p><strong>Figure 2:</strong> the image of the board we have used in this project</p>
+	</div>
+
+	<h4>System Overview</h4>
+	<p style="width: 50%;">
+		This section describes the use cases and the system design in a fair level of detail, 
+		and includes a few sections covering high level use cases, the system design and its modules.
+		It will be followed by a detailed section covering the computer vision aspect, which is the major focus of the project.
+	</p>
+	<h4>
+		<strong>Environment setting</strong>
+	</h4>
+	<p>The system is designed to be used as follows:<br></p>
+	<ol style="width: 50%;">
+		<li>A standard laptop used in a typical setting on a desk. </li>
+		<li>A Backgammon board is laid out open on the desk (or another flat surface) either to the left or right of the laptop, at the user’s convenience (other board placements such as in-front or at the back of the laptop are theoretically possible, however not recommended due to degraded user experience).   </li>
+		<li>A standard USB-webcam connected to the laptop, placed opposing to the player. There are no assumptions on the camera angle and position, as long as the board is set on a flat surface and fitted entirely in the image.</li>	
+		
+	</ol>
+	<h4>
+		Game Scenario
+	</h4>
+	Game Scenario
+	<ol type="1">
+		<li>
+			setup:<br>
+			 <ol type="a">
+				<li>
+					After launching the program, the user has to choose between player types for both players. Three options are available:
+					<ol type="i">
+						<li>
+							Random computer player (easy, for beginners)
+						</li>
+						<li>
+							AI-powered computer player (difficult).
+						</li>
+						<li>
+							Human player.
+						</li>
+					</ol>
+				</li>
+				<li>
+						Once game setup is done, the program needs to perform an initial calibration process.<br>
+						This process is performed only once per game.<br>
+						The process is straightforward, and requires taking a picture of the empty Backgammon board (i.e., with no checkers).<br>
+				</li> 
+			</ol>
+		</li>
+		<li>
+			Game: <br>
+			 <ol type="a">
+				<li>
+					The game begins, with alternating turns between the players, until the end.
+				</li>
+				<li>
+					The game is accompanied by a visual representation of the Backgammon board on the screen, which is correlated with the physical board. 
+				</li>
+				<li style="width: 50%;">
+					Rolling the dice is performed automatically for both players (human and computer) and is represented visually on the screen, i.e. 
+					no physical dice rolling is required.
+					We figured out that this will provide a smoother and more intuitive user experience, as the human player won’t have to roll the dice twice per round
+					 (once for himself, once for the computer), or alternatively to roll differently for the user vs. the computer. 
+				</li>
+				<li>
+					The system enforces game rules, and refuses continuing the game if a certain move is illegal, or e.g. if the user moved the computer’s checkers not as instructed. 
+				</li>
+				<li>
+					On the computer turns, the user will be asked to move the computer’s checkers according to instructions on the screen.<br>
+					 Once the correct moves have been completed the user will be able to click button to move to the next instruction or to roll the dice for the next player	
+				</li>
+			</ol> 
+		</li>
+	</ol>
+<div>
+<h3 align="left"> Approach and Method</h3>
+<!-- <p align="justify"> -->
+	<div>
+		In order to solve this problem we splitted it to modules(look at figure 3)<br>
+	<img src="ICBV211-123395-Figure_3.png" alt="Figure 3"/>
+	<p>
+		<strong>Figure 3:</strong>The program modules
+	</p>
+	</div>
+	<div>
+
+		<h4>
+			The Game Mannagment System
+			</h4>
+		
+	<p style="width:50%;">
+	The game management system that we built was based on OpenAi gym toolkit.<br>
+	This toolkit includes many AI environment descriptions for various games, including Backgammon specifically.<br>
+	We leveraged their Backgammon environment and extended it to fit our needs for the project.<br>
+	In a nutshell, the core environment describes the game programmatically: it holds the current player, the board state, the bar state and the offbar state for each player. It has four main functions:
+	Reset: reset the game state into the initial state (the game starting position).<br>
+	Step: this function gets the set of moves that the agent wishes to perform, and changes the environment based on those actions.<br>
+	Get_valid_actions:this function provides all the available legal moves for the current player, based on the current board state and the dice roll.<br>
+	Get_opponent_agent: this function ends the player’s turn and returns the move of the opposing agent.<br>
+
+	As mentioned above, we had to extend the OpenAI system with various adaptations, such ass fixing its ability to render the game state to a window and adding the ability to single move for a better user experience.<br>
+	In addition to the functionality described above, this module also interacts with all other modules, orchestrating between the GUI, the AI and the computer vision modules for creating a smooth game experience.<br>
+	</p>
+	</div>
+	<div>
+		<h4>
+			The Gui
+		</h4>
+		<p style="width: 50%;">
+	The GUI was built using the Tkinter library, and it is the entrance point of the game, immediately when launching the executable. <br>
+	It is based on a GUI provided by OpenAi gym, with significant adaptations and modifications for our project.<br>
+	The game starts by offering the user to choose the agent type for each color: the white player agent type and the black player agent type.<br>
+	Then, the player needs to perform the calibration process with the empty board. <br>
+	The process is smooth, with informative error messages and images if the calibration process fails.<br> 
+	Once the calibration is successful, the GUI presents the initial game state that the board needs to be in.<br>
+	After the player prepares the initial game board he will click on the button to check that the board is set up correctly to start the game.<br>
+	The first player is selected randomly, and then the game is running, turn after turn.<br>
+	We print the selected player and the roll dice to the console and also render the dice roll in the UI.<br> 
+	If the current agent is the computer agent, then it will split the selected action to discrete, single moves.<br>
+	Each such move is rendered on the screen, waiting for the player to play that move on the real board and click on button on the gui and checking that the desired state is detected by the camera.<br>
+	For the human player turns, the player will make the  whole move on the board and then click a “continue” button.<br>
+	Then, the system will check the physical board state and verify whether its state is one of the possible states that are available from the last verified game state (taking into account the last board position and the rolled dice). 
+		</p>
+		<div>
+			<img src="ICBV211-123395-Figure_4.png" alt="figure 4">
+			<p>
+				<strong>Figure 4:</strong> A snapshot of the GUI presenting the opening screen, where the player selects the agent types for each color.<br>
+			</p>
+		</div>
+	</div>
+	<div>
+		<h4>
+			The Game Agents
+		</h4>
+		<p>
+			The system includes 3 agents with different move selection policy:
+		</p>
+			<ol type="1">
+				<li>
+					Random computer agent: the agent selects a random move from its available list of moves, as per the current board state and the dice roll.<br> 
+					This is considered an easier setting for the rival human player. 
+				</li>
+				<li>
+					Td-Gammon agent:in order to get agents that perform better than random agent we trained a neural network to predict an score for each move for the WHITE AGENT to win from that move.<br>
+					So the white agent will use this network and attempt to maximize the score and the black agent will use  it and try to  minimaize the score.<br>
+					The network was trained with 2 computer agents playing against each other.<br>
+					After The training process was completed the network was evaluated and got 100% win rate against the random agent and  close to 50 % when played against another td agent.<br>
+					For more information look at the reference.<br>
+				</li>
+				<li>
+					Human agent: A human player that performs all the moves of the game, excluding the dice roll (that takes place using the computer, as mentioned above). <br>
+				</li>
+			</ol>
+	</div>
+	<div>
+		<h4>
+			The Computer Vision System
+		</h4>	
+		<p>
+			The computer vision module has been developed from scratch by the project team. The module is responsible for the following:
+		</p>
+			<ol type="1">
+				<li>
+					Webcam connection and image acquisition. 
+				</li>
+				<li>
+					Detecting the board in an image and performing calibration. 
+				</li>
+				<li>
+					Detecting the board including checkers on it, acquiring current board status. 
+				</li>
+				<li>
+					Translate the visual board status to an object describing the game status, as required by the game management module. 
+				</li>
+			</ol>			
+		<hr>
+		<div>
+			<h4>
+				Computer Vision Module
+			</h4>
+	
+			This section describes in detail the process we have gone through while developing the computer vision module, which was indeed the greatest challenge of this project.<br>
+			 We outline the challenges and the solutions systematically, as we encountered them during the R&D process.<br><br>
+
+			Early in the process, during system design we have realized the challenging nature of capturing Backgammon checkers and board due to the following reasons:<br>
+			<ul style="width: 60%;">
+				<li>
+
+					There are many checkers (30), they are relatively small and have no fixed placeholders on the board (i.e. there are no physical boundaries, apart from the triangles drawn on the board).<br>
+					 However, those cannot even be considered as boundaries; when stacked, a couple of checkers on a triangle may completely hide it.<br>
+				</li>
+				<li>
+					The black checkers are literally in the same color of the black triangles, making it difficult even for a human eye to notice their presence on a black triangle in a picture taken by a standard webcam.
+				</li>
+				<li>
+					The board is made of mediocre quality wood, it’s surface and edges/bars aren’t smooth, and have color/texture variations. Moreover, the board color is not easily distinguishable from its surrounding environment. 
+				</li>
+				<li>
+					As checkers cover important visually-recognizable elements of the board (e.g. the red triangles) during the game, it is very hard (if not impossible) to use these for accurate board detection, or alternatively to easily capture board status in a stateless fashion, without relying on previously captured images.
+				</li>
+			</ul>
+			<p>
+				A photo of the board and checkers chosen for this project can be found at figure 2 above. 
+			</p>
+			<div>
+				<strong>we have taken the following approach for accurate detection:</strong><br>
+				<ol type="1">
+					<li>
+						The detection of the locations of the checkers on the board during the game will be done in respect to an already existing image of the empty board captured during initialization, relying solely on the pixel coordinates of the checkers for their placement in a pre-captured map (that contains multiple containers in respective locations on the board where checkers can be placed). 
+					</li>
+					<li>
+						As per #1, it is clear that the board detection and alignment must be very accurate in order to correctly report the checkers in the right location -- during the entire game. 
+					</li>
+					<li>
+						Due to the challenges in colour distinction in some areas, visual cues may be used where needed to ensure sufficient accuracy of detection.
+					</li>
+					<li>
+						The detection of the board should rely on its boundaries, as its visual elements may be covered by checkers during the game.   
+					</li>
+				</ol> 
+					The following sections will describe all process steps in detail. 
+					<div>
+						<h3> Board Detection</h3>
+						<p>
+							The first challenge we faced was the accurate detection of the board area.<br>
+							 Most of the experiments we conducted were on a table which was in a color quite similar to the board color.<br>
+							Initially, we have tried multiple techniques for accurately detecting the board, including using various HSV color filters, along with blurring and erosion/dilation. Unfortunately, all of our experiments failed after investing days in attempting to detect the contours of the board. As predicted, the color of the board, being not very much distinguishable from the table, was a challenge.<br>
+							See figure 5, comparing the image of the board vs. the one of the best HSV filters we could apply empirically.
+						</p>
+						<div>
+							<img src="ICBV211-123395-Figure_5.png" alt="Figure 5:"/>
+							<p>
+								<strong>Figure 5:</strong> The original image acquired by the webcam (top) and the seemingly best performing HSV filter (bottom).<br>
+								 Note the light reflection on the table near the top right corner of the board; it made the detection of a square contour around the board virtually impossible, even after blur and/or erosion and dilation. 
+							</p>
+						</div>
+						<div>
+							<p>
+								After consultation, we’ve figured out that adding a minor visual cue would be necessary for getting high reliability board detection.<br>
+								Thus, we have attached four small green circle stamps, one in each corner of the board.<br>
+								 They can be observed in figure 6 below, along with how they were detected using the HSV filter:
+							</p>
+							<div>
+								<img src="ICBV211-123395-Figure_6.png" alt="Figure 6"/>
+								<p>
+									<strong>Figure 6:</strong>Original board image along with 4 small green stamps, one at each corner of the board (top)<br>
+									 The same image after applying green HSV filter, erosion and dilation, for highlighting the circles. 
+								</p>	
+							</div>
+							<p style="width: 50%;">
+								This setup was just enough for getting the board detection right.<br>
+								In order to reduce noise and highlight the green circles, we used erosion and dilation.<br>
+								Then, the Hough circle transform was used to locate the circles.<br>
+								However, as we’ve noticed issues in different light conditions with objects near the board<br>
+								(adding some “false-positive” circles to the image occasionally),<br>
+								and in order to increase the robustness, we added a very simple geometric check.<br>
+								pecifically, we used the fact that the board is a square, determining the distance ratios expected between the four points,<br>
+								with some factor to enable reasonable rotation of the camera.<br>
+								This increased robustness was added at the expense of limiting the camera angle,<br>
+								however we figured out that the more frequent use case is when the board is moved / rotated sideways on the table, which is completely unaffected by this detection method,<br>
+								while camera angle is rather stable and in the vicinity of 90° as it has to capture the entire board, which is quite large.<br>
+								<strong><em>This additional check can be enabled/disabled easily. </em> </strong><br>  
+							</p>
+							<p>
+								After detecting the board vertices, homography was performed in order to ensure that we have an identically looking image at each detection,<br>
+								as if the camera was aligned directly over the board.<br> In order to perform it, we had to locate where each of the board vertices is compared to the image vertices (e.g. top-left, bottom-right).<br>
+								This is done automatically and then homography transformation is applied, from each of the 4 green points to a 400 x 400 pixels square (Figure 7b).<br>  
+							</p>
+							<div>
+								<img src="ICBV211-123395-Figure_7a.png" alt="Figure 7a"/>
+								<p>
+									<strong>Figure 7a:</strong>The expected length between points according to the square shape of the board. 
+								</p>
+
+								<img src="ICBV211-123395-Figure_7b.png" alt="Figure 7b">
+								<p>
+									<strong>Figure 7b:</strong>The detected board after homography.
+								</p>
+							</div>
+						</div>
+					</div>
+					<div>
+						<h3>
+							Board Calibration
+						</h3>
+						<p style="width: 50%;">							
+							As mentioned above, calibration takes place once, just before the beginning of the game, and requires an empty board.<br>
+							The goal of this process is to find all relevant areas in the board where checkers can “legally” be placed, define these areas numerically on the detected board image and tag them uniquely.<br>
+							We named these checkers containers. Overall, we had to tag 25 checkers containers, that include 24 triangles (12 red, 12 black) and the bar, which is the long rectangle separating both parts of the board.<br>
+							(checkers removed by the opponent are being placed in the bar).
+							Calibration was performed on a tightly cropped board image (figure 7b).<br>
+							 The calibration process consists of two steps, and is performed automatically with no user intervention.
+						</p>
+						<h4>Red Triangles Detection</h4>
+						Assuming tight cropping and alignment of the board image, we figured out that detecting all 12 red triangles would be:
+						<ol type="i">
+							<li>
+								most accurate, due to the distinct shape and color
+							</li>
+							<li>
+								their contours are enough for detecting all other checkers containers in the board.
+							</li>
+
+						</ol>
+						<p style="width:50%;">
+						Thus, taking the aligned and cropped board image as an input, this method applies Gaussian blur for noise removal, and then applies HSV filter for the red color.<br>
+							Then, all contours in the image are extracted and processed according to the following: 
+						<ol type="1">
+							<li>
+									Each contour is approximated to a polygon. 
+							</li>
+							<li>
+								FIltering only contours that have exactly 3 edges. 
+							</li>
+							<li>
+								We observed that triangles are isosceles triangles with ratio 4.5:1 to the base, and this is verified geometrically on all triangles filtered at step #2.<br>
+								Note that the camera angle doesn’t affect this check due to the homography performed during board detection.
+							</li>
+						</ol>
+						<div>
+							<img src="ICBV211-123395-Figure_8.png" alt="Figure 8">
+							<p>
+								<strong> Figure_8:</strong>
+								Red triangle contours as detected after following the process mentioned above on the cropped board image.
+							</p>
+					</div>
+					<div>
+						<h3>
+							Creating checkers containers 
+						</h3>
+						<div>
+							<p>
+								This stage is performed analytically, without the need of additional images.<br>
+								It gets as input solely the red triangles contours obtained previously, and includes the following steps:
+								</p>
+								<ol style="width: 60%;">
+									<li>
+										Create a bounding box around each of the triangle contours.<br>
+										The bounding boxes are more useful than triangles, as in practice the circular checkers override the triangles and are bound by a “virtual” rectangle.<br>
+										Of course, this is also true for the bar which is a rectangle. 
+									</li>
+									<li>
+										Per step 1, we have 12 bounding boxes, 6 in each side of the board.<br>
+										 Now we sort them top to bottom, and then sort the two top-and-bottom lists left to right.
+									</li>
+									<li>
+										Create a list with 25 containers, and assign each of the existing rectangles to their corresponding numbers in the Backgammon board (1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23). 
+									</li>
+									<li>
+										All of the remaining containers were created based on the dimensions of the containers created at step 2.<br>
+										 For example, black triangle #2 is between red triangles #1 and #3, and its dimensions are computed according to the width and height of their bounding boxes.<br>
+										  Same goes for the rest of the black triangles and the bar (detailed description can be found in the code (bg_board_cv.py, function get_checkers_containers).  
+									</li>
+								</ol>
+								<img src="ICBV211-123395-Figure_9.png" alt="Figure 9">
+								<p style="width: 50%;">
+									<strong>Figure 9:</strong>
+									The cropped board image with the checkers containers’ bounding boxes and their numbers (left) and the Backgammon board numbering (right).<br>
+									 Note that the left image is flipped, as the image is taken from the computer point of view, which opposes the user<br>
+									(i.e. the user is in front of triangles 1-12). 
+								</p>
+						</div>
+					</div>
+					<div>
+						<h3>
+							During the Game
+						</h3>
+						<p style="width: 50%;">
+							Following the calibration step performed before the game begins, all that needs to be done during the game is to detect the location of various checkers on the board, and assign each to one of the checkers containers identified previously.<br> 
+							However, as noted above, this part also had a challenge, where the black checkers could not be distinguished when placed on a black triangle.<br>
+							 Thus, we had to paint the black checkers with a distinctive color (a silver marker was chosen). 
+						</p>
+						<img src="ICBV211-123395-Figure_10.png" alt="Figure 10"/>
+						<p>
+							<strong>Figure 10:</strong>The left image was taken using the webcam, and the board has two black pieces on it.<br>
+							 Are you able to locate them? Probably not. Obviously, also the computer can’t...<br> 
+							 On the right, a black checker after recoloring. 
+						</p>
+						<p>
+							Whenever the physical board status is inquired by the game management module<br>
+							it calls the get_current_board_status method, which performs the following: 
+						</p>
+						<ol style="width:50%;">
+							<li>
+								Board detection using the same method mentioned above. 
+							</li>
+							<li>
+								Using two HSV filters, one for capturing the white checkers and one for capturing the black (now silver) checkers.
+							</li>
+							<li>
+								Performing erosion and dilation for cleaning the noise and highlighting the circles in each image.  
+							</li>
+							<li>
+								Use Hough circles transform on each of the two images. 
+							</li>
+							<li>
+								Perform steps 2-4 on multiple images (around 11), and choose the two images with the highest number of votes in terms of checkers counts (black and white).<br>
+								 For example, if 10 images were taken, 6 of them had 14 white checkers, 7 of them had 12 black checkers, then these corresponding images are chosen respectively for the white and black checkers.<br>
+								 This mechanism was added for additional robustness as per issues of Hough transform not performing well on all pictures. 
+							</li>
+							<li>
+								Associate the detected checkers to their checkers containers according to the container that includes their center.<br>
+								 return the error to the game management if found checkers in an illegal location (i.e. outside all of the containers). 
+							</li>
+						</ol>
+						<img src="ICBV211-123395-Figure_11.png" alt="Figure 11"/>
+						<p>
+							<strong>Figure 11:</strong>The original image (top) and the cropped board along with the detected checkers.<br>
+							 White checkers denoted in red, black denoted in green (bottom).
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<h3 align="left"> Results</h3>
+
+<p align="justify">
+	
+<h4><strong>Experiments and Setup</strong></h4>
+<h5><strong>Hardware and physical setup</strong></h5>
+The game board is placed on a table, opposing the computer screen and the camera. Distance of approximately 40 - 80 cm from the camera to the board was tested successfully. <br>
+
+<strong><em>Laptop:</em></strong> MacBook Pro 2.3 GHz Quad-Core i5<br>
+<strong><em>Webcam:</em></strong> Logitech HD PRO Webcam C920<br>
+
+<strong><em>Backgammon board:</em></strong> 33.5 x 33.5 cm square, divided by a bar in the middle. <br>
+The board consists of 24 triangles, 12 of which are red and 12 are black. <br>
+15 white checkers, caramel coloured. <br>
+15 black checkers, black coloured (later painted silver). <br>
+<strong><h5>Software</h5></strong>
+
+<strong><em>Operating system:</em></strong> macOS Big Sur 11.2.2<br>
+<strong><em>Python version:</em></strong> 3.8.5<br>
+<strong><em>OpenCV version:</em></strong> 4.5.1<br>
+	<strong>Experiments Summary</strong><br>
+	Multiple experiments were conducted with the system.<br>
+	It was found to function pretty well, robust to board angle changes and to minor camera angle changes.<br>
+	Generally, lighting conditions changes were harder to deal with, sometimes requiring altering some of the HSV filters.<br>
+	The system performed better with a mix of indoor lighting and sunlight from the window, and thus most of the tests were conducted in such an environment.<br>
+	Under these environment conditions, we were able to play against the computer on the physical board, as designed. 
+	In terms of performance, the experience was really smooth, with sub-second performance for capturing the game status, virtually nonexistent from the user point of view. 
+	</p>
+
+<h3 align="left"> Project's Video</h3>
+<i>Do not touch. Here your project's video clip will be embedded by us...</i>
+<p align="justify">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/LYcXAEZfQFY" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</p>
+
+<h3 align="left"> Conclusions</h3>
+<p align="justify">
+<div>
+	First, even though it was hard and even frustrating at times when encountering challenging problems, we really enjoyed working on this project.<br>
+	More than anything, we experienced first hand the great challenge of computer vision, learning to appreciate our eyes as a magnificent wonder, while realizing how far computers are from humans in this area.<br>
+	Learning deeply how hard it is to develop robust computer vision applications, we now look at such software in a different way. So, to conclude, it was a great learning experience for us, and a good closure to the course as we used many of the building blocks and tools studied during the lectures. 
+	
+	While we are happy with our deliverables, we have a wishlist of upgrades for the future…<br>
+<ol>
+<li>
+	Improve granularity of board detection, so boards in different colors (as seen at figure 1) could be detected with a similar calibration process. 
+</li>
+<li>
+	Improve the system robustness to diffrenet lighting conditions
+</li>
+<li>
+	Remove the need for visual cues (green stickers) from the board detection.
+</li>
+<li>
+	We believe that using a deep neural network trained properly may be able to address both #1 and #2 and #3.
+</li>
+<li>
+	Detecting automatically when  the player did the pc turn/his turn.
+</li>
+<li>
+	Change the UI color of triangles automatically so they adapt to the color of the board (can probably be done by taking an image of the board during calibration and using it on the UI). 
+</li>
+<li>
+	Add game series option (tournament), i.e. need a series of games in order to win. 
+</li>
+</ol>
+</div>
+</p>
+
+<h3 align="left"> Additional Information</h3>
+<div align="justify">
+	<ul>
+	<li> Full project report (<a href="link_to_reports__pdf_file" class="course">PDF</a>). 
+	<li> Oral presentation slides (<a href="link_to_presentation_file_ptt" class="course">ppt</a>
+			, <a href="http://link_to_pdf_presentation_file" class="course">PDF</a>).
+	<li> Project's video file (<a href="link_to_youtube_video" class="course">video_file</a>).
+	<li> <a href="link_to_executable" class="course">Downloadable executable</a> (mention the appropriate platform).
+	<li> <a href="link_to_code_file_or_page" class="course">Downloadable source code</a>.
+	</ul>
+	<p>Make sure that all the downloadable files are included in your zip file!</p>
+</div>
+
+<h3 align="left"> References </h3>
+<p align="justify">
+List any references from the literature you have consulted or used.
+</p>
+
+<!--=======================================================================================================-->
+<!--=                         End of page content                                                       =-->
+<!--=======================================================================================================-->
+
+
+</BODY>
+</HTML>
+
+
+
